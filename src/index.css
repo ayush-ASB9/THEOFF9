@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --off9-purple: #B095FB;
+  --off9-purple: #b095fb;
   --off9-black: #000000;
-  --off9-main-scale: clamp(180px, 41vw, 760px);
-  --off9-mark-scale: clamp(90px, 15vw, 220px);
-  --off9-small-scale: clamp(46px, 7vw, 90px);
+  --off9-main-scale: clamp(200px, 45vw, 780px);
+  --off9-mark-scale: clamp(120px, 18vw, 300px);
+  --off9-small-scale: clamp(42px, 7vw, 160px);
   font-family: Inter, 'Segoe UI', Helvetica, Arial, sans-serif;
   color: var(--off9-black);
   background: var(--off9-purple);
@@ -36,11 +36,6 @@ body {
   overflow: hidden;
 }
 
-button,
-img {
-  font: inherit;
-}
-
 img {
   display: block;
   max-width: 100%;
@@ -61,69 +56,46 @@ img {
   height: 100svh;
   background: var(--off9-purple);
   overflow: hidden;
+  isolation: isolate;
 }
 
 .broken-o,
-.ghost-o {
+.ghost-o,
+.brand-block {
   position: absolute;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  user-select: none;
+  pointer-events: none;
 }
 
 .broken-o {
-  top: 12%;
-  right: 14%;
-  width: var(--off9-mark-scale);
-  transform: translate(calc(var(--pointer-x) + var(--offset-x)), calc(var(--pointer-y) + var(--offset-y))) rotate(var(--tilt));
-  transition: transform 260ms ease-out;
+  left: var(--o-x);
+  top: var(--o-y);
+  width: var(--o-scale);
+  transform: translate(-50%, -50%) rotate(var(--o-rotation));
   z-index: 3;
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1), width 700ms cubic-bezier(0.2, 0.7, 0.2, 1), left 700ms cubic-bezier(0.2, 0.7, 0.2, 1), top 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .ghost-o {
-  left: 10%;
-  bottom: 18%;
-  width: var(--off9-small-scale);
-  transform: translate(var(--ghost-x), var(--ghost-y)) rotate(var(--ghost-tilt));
-  transition: transform 220ms ease-out, opacity 220ms ease-out;
+  left: var(--ghost-x);
+  top: var(--ghost-y);
+  width: var(--ghost-scale);
+  transform: translate(-50%, -50%) rotate(var(--ghost-rotation));
+  opacity: var(--ghost-opacity);
   z-index: 1;
-}
-
-.phase-1 .broken-o {
-  transform: translate(calc(var(--pointer-x) * 0.7 + var(--offset-x)), calc(var(--pointer-y) * 0.8 + var(--offset-y))) rotate(-4deg);
-}
-
-.phase-2 .broken-o {
-  transform: translate(calc(var(--pointer-x) * 1.2 + var(--offset-x)), calc(var(--pointer-y) * 1.2 + var(--offset-y))) rotate(8deg);
-}
-
-.phase-1 .ghost-o,
-.phase-2 .ghost-o {
-  opacity: 0.82;
-}
-
-.broken-o:focus-visible {
-  outline: 2px solid var(--off9-black);
-  outline-offset: 12px;
-}
-
-.broken-o-image {
-  width: 100%;
-  height: auto;
-  user-select: none;
-  -webkit-user-drag: none;
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 700ms ease;
 }
 
 .brand-block {
-  position: absolute;
-  left: 42%;
-  top: 48%;
+  left: 50%;
+  top: 54%;
   width: var(--off9-main-scale);
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) translate(var(--wordmark-x), var(--wordmark-y)) rotate(var(--wordmark-rotation));
   z-index: 2;
-  transition: transform 220ms ease-out;
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1), width 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
+.broken-o-image,
 .wordmark {
   width: 100%;
   height: auto;
@@ -134,38 +106,30 @@ img {
 .tagline {
   position: absolute;
   left: 50%;
-  bottom: 8%;
-  transform: translateX(-50%);
+  top: 78%;
+  transform: translate(-50%, var(--tagline-shift));
   margin: 0;
-  font-size: clamp(9px, 0.9vw, 12px);
+  font-size: clamp(10px, 0.9vw, 12px);
   font-weight: 700;
   letter-spacing: 0.08em;
   line-height: 1.4;
   text-transform: lowercase;
   text-align: center;
+  z-index: 4;
 }
 
 @media (max-width: 700px) {
-  .broken-o {
-    top: 12%;
-    right: 8%;
-    width: clamp(100px, 22vw, 180px);
-  }
-
-  .ghost-o {
-    left: 10%;
-    bottom: 16%;
-    width: clamp(26px, 8vw, 74px);
+  .site-shell {
+    cursor: auto;
   }
 
   .brand-block {
-    left: 50%;
-    top: 52%;
     width: min(82vw, 540px);
+    top: 55%;
   }
 
   .tagline {
-    bottom: 7%;
+    top: 80%;
     letter-spacing: 0.06em;
     font-size: 10px;
   }
@@ -174,7 +138,8 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .broken-o,
   .ghost-o,
-  .brand-block {
+  .brand-block,
+  .tagline {
     transition: none;
   }
 
