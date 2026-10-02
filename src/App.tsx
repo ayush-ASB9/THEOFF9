@@ -83,7 +83,10 @@ function App() {
     >
       <section className="hero" aria-labelledby="site-title">
         <div className="logo-wrap">
-          <img className="logo" src="/THEOFF9.png" alt="THEOFF9" id="site-title" />
+          <div className="brand-lockup" aria-label="THEOFF9 logo set">
+            <img className="logo-mark" src="/O%20of%20theoff9.png" alt="THEOFF9 icon" />
+            <img className="logo" src="/image.png" alt="THEOFF9" id="site-title" />
+          </div>
         </div>
 
         <p className="tagline" aria-live="polite">{tagline}</p>
