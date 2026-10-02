@@ -147,6 +147,7 @@ function App() {
     codeInputActive: false,
     unlockTriggered: false,
     logoClicks: 0,
+    codeBuffer: '',
   });
 
   const dragRef = useRef<Point | null>(null);
@@ -185,6 +186,35 @@ function App() {
   }, [route, secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlockTriggered]);
 
   useEffect(() => {
+    if (route !== '/' || !secretLock.codeInputActive || secretLock.unlockTriggered) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Backspace') {
+        setSecretLock((current) => ({ ...current, codeBuffer: current.codeBuffer.slice(0, -1) }));
+        return;
+      }
+
+      if (event.key.length !== 1) return;
+
+      const nextBuffer = `${secretLock.codeBuffer}${event.key}`.replace(/\s+/g, '').toUpperCase();
+      setSecretLock((current) => {
+        const updated = `${current.codeBuffer}${event.key}`.replace(/\s+/g, '').toUpperCase();
+        if (updated === 'THEOFF9') {
+          event.preventDefault();
+          window.history.pushState({}, '', '/chk9');
+          setRoute('/chk9');
+          return { ...current, codeBuffer: updated, codeInputActive: false, unlockTriggered: true };
+        }
+
+        return { ...current, codeBuffer: updated };
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [route, secretLock.codeBuffer, secretLock.codeInputActive, secretLock.unlockTriggered]);
+
+  useEffect(() => {
     if (route !== '/' || !secretLock.dotSequenceFinished || secretLock.unlockTriggered) return;
 
     const handleLogoClick = () => {
@@ -194,7 +224,7 @@ function App() {
         const nextCount = current.logoClicks + 1;
         if (nextCount >= 9) {
           requestAnimationFrame(() => hiddenInputRef.current?.focus());
-          return { ...current, logoClicks: nextCount, codeInputActive: true };
+          return { ...current, logoClicks: nextCount, codeInputActive: true, codeBuffer: '' };
         }
 
         return { ...current, logoClicks: nextCount };
@@ -503,6 +533,7 @@ function App() {
       event.target.value = '';
       setSecretLock((current) => ({
         ...current,
+        codeBuffer: candidate,
         codeInputActive: false,
         unlockTriggered: true,
       }));
