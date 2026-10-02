@@ -38,8 +38,39 @@ const DISCOVERY_DELAYS: Record<DiscoveryId, number> = {
 
 const DEFAULT_VIEWPORT = { width: 1440, height: 900 };
 
+type Route = '/' | '/chk9';
+
+function Chk9Route() {
+  const [phase, setPhase] = useState<'black' | 'project' | 'chk9' | 'description'>('black');
+
+  useEffect(() => {
+    const timers = [
+      window.setTimeout(() => setPhase('project'), 900),
+      window.setTimeout(() => setPhase('chk9'), 2400),
+      window.setTimeout(() => setPhase('description'), 4200),
+    ];
+
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, []);
+
+  return (
+    <main className="chk9-route" aria-live="polite">
+      <div className={`chk9-text project ${phase === 'project' || phase === 'chk9' || phase === 'description' ? 'visible' : ''}`}>
+        PROJECT 01
+      </div>
+      <div className={`chk9-text chk9 ${phase === 'chk9' || phase === 'description' ? 'visible' : ''}`}>
+        CHK9
+      </div>
+      <div className={`chk9-text description ${phase === 'description' ? 'visible' : ''}`}>
+        learn quant trading without being a coder
+      </div>
+    </main>
+  );
+}
+
 function App() {
   const [viewport, setViewport] = useState(DEFAULT_VIEWPORT);
+  const [route, setRoute] = useState<Route>(() => (window.location.pathname === '/chk9' ? '/chk9' : '/'));
   const [visible, setVisible] = useState<Record<DiscoveryId, boolean>>({
     chk9: false,
     ai: false,
@@ -111,24 +142,33 @@ function App() {
     conclusion: false,
   });
 
-  const dragRef = useRef<Point | null>(null);
-  const lineRef = useRef<number | null>(null);
-  const [mounted, setMounted] = useState(false);
   const [secretLock, setSecretLock] = useState({
     dotSequenceFinished: false,
     codeInputActive: false,
-    unlocked: false,
+    unlockTriggered: false,
     points: [] as Array<{ x: number; y: number }>,
   });
-  const [revealStage, setRevealStage] = useState<'idle' | 'black' | 'project' | 'chk9' | 'description'>('idle');
+
+  const dragRef = useRef<Point | null>(null);
+  const lineRef = useRef<number | null>(null);
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const sync = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
     sync();
     window.addEventListener('resize', sync);
-    setMounted(true);
     return () => window.removeEventListener('resize', sync);
+  }, []);
+
+  useEffect(() => {
+    const syncRoute = () => {
+      const nextRoute = window.location.pathname === '/chk9' ? '/chk9' : '/';
+      setRoute(nextRoute);
+    };
+
+    syncRoute();
+    window.addEventListener('popstate', syncRoute);
+    return () => window.removeEventListener('popstate', syncRoute);
   }, []);
 
   useEffect(() => {
@@ -137,36 +177,23 @@ function App() {
   }, [chk9.complete, secretLock.dotSequenceFinished]);
 
   useEffect(() => {
-    if (!secretLock.dotSequenceFinished || !secretLock.codeInputActive || secretLock.unlocked) return;
+    if (route !== '/' || !secretLock.dotSequenceFinished || !secretLock.codeInputActive || secretLock.unlockTriggered) return;
     const focusTimer = window.setTimeout(() => {
       hiddenInputRef.current?.focus();
-      hiddenInputRef.current?.setSelectionRange(0, hiddenInputRef.current.value.length);
     }, 0);
     return () => window.clearTimeout(focusTimer);
-  }, [secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlocked]);
+  }, [route, secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlockTriggered]);
 
   useEffect(() => {
-    if (!secretLock.unlocked) return;
+    if (route !== '/' || !secretLock.dotSequenceFinished || secretLock.codeInputActive || secretLock.unlockTriggered) return;
 
-    setRevealStage('black');
-    const timers = [
-      window.setTimeout(() => setRevealStage('project'), 900),
-      window.setTimeout(() => setRevealStage('chk9'), 2600),
-      window.setTimeout(() => setRevealStage('description'), 4200),
-    ];
-
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [secretLock.unlocked]);
-
-  useEffect(() => {
-    if (!secretLock.dotSequenceFinished || secretLock.codeInputActive || secretLock.unlocked) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const point = { x: event.clientX, y: event.clientY };
+    const handlePointerDown = (event: Event) => {
+      const pointerEvent = event as PointerEvent;
+      const point = { x: pointerEvent.clientX, y: pointerEvent.clientY };
       const minimumDistance = Math.min(window.innerWidth, window.innerHeight) * 0.12;
 
       setSecretLock((current) => {
-        if (!current.dotSequenceFinished || current.codeInputActive || current.unlocked) return current;
+        if (route !== '/' || !current.dotSequenceFinished || current.codeInputActive || current.unlockTriggered) return current;
 
         const isFarEnough = current.points.every(
           (existing) => Math.hypot(existing.x - point.x, existing.y - point.y) >= minimumDistance,
@@ -175,11 +202,9 @@ function App() {
         if (!isFarEnough) return current;
 
         const nextPoints = [...current.points, point];
-
         if (nextPoints.length >= 9) {
-          const nextState = { ...current, points: nextPoints, codeInputActive: true };
           requestAnimationFrame(() => hiddenInputRef.current?.focus());
-          return nextState;
+          return { ...current, points: nextPoints, codeInputActive: true };
         }
 
         return { ...current, points: nextPoints };
@@ -188,7 +213,18 @@ function App() {
 
     window.addEventListener('pointerdown', handlePointerDown);
     return () => window.removeEventListener('pointerdown', handlePointerDown);
-  }, [secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlocked]);
+  }, [route, secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlockTriggered]);
+
+  useEffect(() => {
+    const timers = Object.entries(DISCOVERY_DELAYS).map(([id, delay]) => {
+      const timeout = window.setTimeout(() => {
+        setVisible((current) => ({ ...current, [id]: true }));
+      }, delay);
+      return timeout;
+    });
+
+    return () => timers.forEach((timeout) => window.clearTimeout(timeout));
+  }, []);
 
   useEffect(() => {
     const timers = Object.entries(DISCOVERY_DELAYS).map(([id, delay]) => {
@@ -478,7 +514,7 @@ function App() {
   };
 
   const handleSecretCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (secretLock.unlocked || !secretLock.codeInputActive) return;
+    if (route !== '/' || secretLock.unlockTriggered || !secretLock.codeInputActive) return;
 
     const candidate = event.target.value.replace(/\s+/g, '').toUpperCase();
     if (candidate === 'THEOFF9') {
@@ -486,10 +522,16 @@ function App() {
       setSecretLock((current) => ({
         ...current,
         codeInputActive: false,
-        unlocked: true,
+        unlockTriggered: true,
       }));
+      window.history.pushState({}, '', '/chk9');
+      setRoute('/chk9');
     }
   };
+
+  if (route === '/chk9') {
+    return <Chk9Route />;
+  }
 
   return (
     <main className="site-shell">
@@ -636,7 +678,7 @@ function App() {
 
       <input
         ref={hiddenInputRef}
-        type="password"
+        type="text"
         className="secret-input"
         aria-label="hidden unlock input"
         autoComplete="off"
@@ -645,25 +687,11 @@ function App() {
         inputMode="text"
         onChange={handleSecretCodeChange}
         onBlur={() => {
-          if (secretLock.codeInputActive && !secretLock.unlocked) {
+          if (route === '/' && secretLock.codeInputActive && !secretLock.unlockTriggered) {
             hiddenInputRef.current?.focus();
           }
         }}
       />
-
-      {secretLock.unlocked && (
-        <div className="reveal-screen" aria-live="polite">
-          <div className={`reveal-text project ${revealStage === 'project' || revealStage === 'chk9' || revealStage === 'description' ? 'visible' : ''}`}>
-            PROJECT 01
-          </div>
-          <div className={`reveal-text chk9 ${revealStage === 'chk9' || revealStage === 'description' ? 'visible' : ''}`}>
-            CHK9
-          </div>
-          <div className={`reveal-text intro ${revealStage === 'description' ? 'visible' : ''}`}>
-            learn quant trading without being a coder
-          </div>
-        </div>
-      )}
     </main>
   );
 }
