@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type PointerEvent } from 'react';
 import wordmark from '../PUBLIC/image.png';
 
 type Point = {
@@ -114,6 +114,14 @@ function App() {
   const dragRef = useRef<Point | null>(null);
   const lineRef = useRef<number | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [secretLock, setSecretLock] = useState({
+    dotSequenceFinished: false,
+    codeInputActive: false,
+    unlocked: false,
+    points: [] as Array<{ x: number; y: number }>,
+  });
+  const [revealStage, setRevealStage] = useState<'idle' | 'black' | 'project' | 'chk9' | 'description'>('idle');
+  const hiddenInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const sync = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
@@ -122,6 +130,65 @@ function App() {
     setMounted(true);
     return () => window.removeEventListener('resize', sync);
   }, []);
+
+  useEffect(() => {
+    if (!chk9.complete || secretLock.dotSequenceFinished) return;
+    setSecretLock((current) => ({ ...current, dotSequenceFinished: true }));
+  }, [chk9.complete, secretLock.dotSequenceFinished]);
+
+  useEffect(() => {
+    if (!secretLock.dotSequenceFinished || !secretLock.codeInputActive || secretLock.unlocked) return;
+    const focusTimer = window.setTimeout(() => {
+      hiddenInputRef.current?.focus();
+      hiddenInputRef.current?.setSelectionRange(0, hiddenInputRef.current.value.length);
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlocked]);
+
+  useEffect(() => {
+    if (!secretLock.unlocked) return;
+
+    setRevealStage('black');
+    const timers = [
+      window.setTimeout(() => setRevealStage('project'), 900),
+      window.setTimeout(() => setRevealStage('chk9'), 2600),
+      window.setTimeout(() => setRevealStage('description'), 4200),
+    ];
+
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [secretLock.unlocked]);
+
+  useEffect(() => {
+    if (!secretLock.dotSequenceFinished || secretLock.codeInputActive || secretLock.unlocked) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const point = { x: event.clientX, y: event.clientY };
+      const minimumDistance = Math.min(window.innerWidth, window.innerHeight) * 0.12;
+
+      setSecretLock((current) => {
+        if (!current.dotSequenceFinished || current.codeInputActive || current.unlocked) return current;
+
+        const isFarEnough = current.points.every(
+          (existing) => Math.hypot(existing.x - point.x, existing.y - point.y) >= minimumDistance,
+        );
+
+        if (!isFarEnough) return current;
+
+        const nextPoints = [...current.points, point];
+
+        if (nextPoints.length >= 9) {
+          const nextState = { ...current, points: nextPoints, codeInputActive: true };
+          requestAnimationFrame(() => hiddenInputRef.current?.focus());
+          return nextState;
+        }
+
+        return { ...current, points: nextPoints };
+      });
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    return () => window.removeEventListener('pointerdown', handlePointerDown);
+  }, [secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlocked]);
 
   useEffect(() => {
     const timers = Object.entries(DISCOVERY_DELAYS).map(([id, delay]) => {
@@ -410,6 +477,20 @@ function App() {
     }));
   };
 
+  const handleSecretCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (secretLock.unlocked || !secretLock.codeInputActive) return;
+
+    const candidate = event.target.value.replace(/\s+/g, '').toUpperCase();
+    if (candidate === 'THEOFF9') {
+      event.target.value = '';
+      setSecretLock((current) => ({
+        ...current,
+        codeInputActive: false,
+        unlocked: true,
+      }));
+    }
+  };
+
   return (
     <main className="site-shell">
       <div className="poster" aria-label="THEOFF9 brand poster">
@@ -552,6 +633,37 @@ function App() {
           </div>
         )}
       </div>
+
+      <input
+        ref={hiddenInputRef}
+        type="password"
+        className="secret-input"
+        aria-label="hidden unlock input"
+        autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        inputMode="text"
+        onChange={handleSecretCodeChange}
+        onBlur={() => {
+          if (secretLock.codeInputActive && !secretLock.unlocked) {
+            hiddenInputRef.current?.focus();
+          }
+        }}
+      />
+
+      {secretLock.unlocked && (
+        <div className="reveal-screen" aria-live="polite">
+          <div className={`reveal-text project ${revealStage === 'project' || revealStage === 'chk9' || revealStage === 'description' ? 'visible' : ''}`}>
+            PROJECT 01
+          </div>
+          <div className={`reveal-text chk9 ${revealStage === 'chk9' || revealStage === 'description' ? 'visible' : ''}`}>
+            CHK9
+          </div>
+          <div className={`reveal-text intro ${revealStage === 'description' ? 'visible' : ''}`}>
+            learn quant trading without being a coder
+          </div>
+        </div>
+      )}
     </main>
   );
 }
