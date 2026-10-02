@@ -33,6 +33,11 @@ body {
   overflow: hidden;
 }
 
+button,
+input {
+  font: inherit;
+}
+
 img {
   display: block;
   max-width: 100%;
@@ -42,19 +47,21 @@ img {
   position: relative;
   min-height: 100svh;
   background: var(--off9-purple);
-  display: grid;
-  place-items: center;
   overflow: hidden;
 }
 
 .poster {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(8px, 1.2vw, 18px);
+  gap: clamp(10px, 1.5vw, 20px);
   text-align: center;
+  z-index: 1;
 }
 
 .wordmark {
@@ -68,12 +75,310 @@ img {
 
 .tagline {
   margin: 0;
+  margin-left: clamp(18px, 2vw, 44px);
   font-size: clamp(10px, 0.9vw, 12px);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.08em;
   text-transform: lowercase;
   color: var(--off9-black);
+}
+
+.experiment-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.experiment {
+  position: absolute;
+  pointer-events: auto;
+}
+
+.chk9 {
+  width: 220px;
+  min-height: 60px;
+}
+
+.line-trigger {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
+}
+
+.market-line {
+  display: block;
+  width: 120px;
+  height: 2px;
+  background: var(--off9-black);
+}
+
+.value-pill,
+.project-tag,
+.ai-square,
+.dead-box,
+.capital-pill,
+.tool-output,
+.package,
+.question-mark {
+  background: var(--off9-black);
+  color: var(--off9-purple);
+  border: 0;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.value-pill,
+.project-tag,
+.ai-square,
+.capital-pill,
+.tool-output,
+.package,
+.question-mark {
+  cursor: default;
+}
+
+.value-pill {
+  padding: 4px 8px;
+  font-size: 12px;
+  margin-top: -8px;
+}
+
+.trajectory-panel {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.trajectory {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--off9-black);
+  background: transparent;
+  cursor: default;
+}
+
+.trajectory.up {
+  background: var(--off9-black);
+}
+
+.trajectory.down {
+  border-width: 2px;
+}
+
+.trajectory.flat {
+  border-radius: 2px;
+}
+
+.ai {
+  width: 60px;
+  min-height: 60px;
+}
+
+.ai-square {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-radius: 2px;
+  cursor: default;
+}
+
+.ai-square.expanded {
+  width: 120px;
+  height: 120px;
+  font-size: 26px;
+  background: rgba(0, 0, 0, 0.94);
+  color: var(--off9-purple);
+}
+
+.ai-form {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  display: flex;
+  gap: 8px;
+  width: 180px;
+}
+
+.ai-form input {
+  width: 110px;
+  border: 1px solid var(--off9-black);
+  background: transparent;
+  color: var(--off9-black);
+  padding: 6px 8px;
+}
+
+.ai-form button {
+  border: 1px solid var(--off9-black);
+  background: var(--off9-black);
+  color: var(--off9-purple);
+  padding: 6px 8px;
+}
+
+.physical {
+  width: 54px;
+  height: 54px;
+  cursor: grab;
+}
+
+.physical-object {
+  display: block;
+  width: 40px;
+  height: 40px;
+  background: var(--off9-black);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--off9-black);
+}
+
+.prototype-mark {
+  display: flex;
+  width: 80px;
+  height: 80px;
+  border: 2px solid var(--off9-black);
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.dead {
+  width: 110px;
+}
+
+.dead-box {
+  width: 80px;
+  height: 32px;
+  font-size: 16px;
+  border: 0;
+  cursor: default;
+}
+
+.dead-box.alive {
+  width: 120px;
+  height: 42px;
+  background: var(--off9-black);
+  color: var(--off9-purple);
+}
+
+.dead-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 30px;
+  margin-top: 8px;
+}
+
+.capital {
+  width: 120px;
+}
+
+.capital-pill {
+  padding: 8px 12px;
+  font-size: 18px;
+  border: 0;
+}
+
+.capital-choice-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.capital-choice {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--off9-black);
+  background: transparent;
+}
+
+.tool {
+  width: 220px;
+}
+
+.tool-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--off9-black);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.tool-form label {
+  font-size: 11px;
+  text-transform: lowercase;
+  letter-spacing: 0.08em;
+}
+
+.tool-form input {
+  width: 100%;
+  border: 1px solid var(--off9-black);
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--off9-black);
+}
+
+.tool-form button,
+.tool-output {
+  border: 1px solid var(--off9-black);
+  background: var(--off9-black);
+  color: var(--off9-purple);
+  padding: 6px 8px;
+}
+
+.consumer {
+  width: 100px;
+}
+
+.package {
+  width: 74px;
+  height: 74px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.package.open {
+  width: 120px;
+  height: 120px;
+}
+
+.research {
+  width: 100px;
+}
+
+.question-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.research-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 @media (max-width: 700px) {
