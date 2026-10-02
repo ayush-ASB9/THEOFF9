@@ -146,7 +146,7 @@ function App() {
     dotSequenceFinished: false,
     codeInputActive: false,
     unlockTriggered: false,
-    points: [] as Array<{ x: number; y: number }>,
+    logoClicks: 0,
   });
 
   const dragRef = useRef<Point | null>(null);
@@ -185,46 +185,28 @@ function App() {
   }, [route, secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlockTriggered]);
 
   useEffect(() => {
-    if (route !== '/' || !secretLock.dotSequenceFinished || secretLock.codeInputActive || secretLock.unlockTriggered) return;
+    if (route !== '/' || !secretLock.dotSequenceFinished || secretLock.unlockTriggered) return;
 
-    const handlePointerDown = (event: Event) => {
-      const pointerEvent = event as PointerEvent;
-      const point = { x: pointerEvent.clientX, y: pointerEvent.clientY };
-      const minimumDistance = Math.min(window.innerWidth, window.innerHeight) * 0.12;
-
+    const handleLogoClick = () => {
       setSecretLock((current) => {
-        if (route !== '/' || !current.dotSequenceFinished || current.codeInputActive || current.unlockTriggered) return current;
+        if (route !== '/' || !current.dotSequenceFinished || current.unlockTriggered) return current;
 
-        const isFarEnough = current.points.every(
-          (existing) => Math.hypot(existing.x - point.x, existing.y - point.y) >= minimumDistance,
-        );
-
-        if (!isFarEnough) return current;
-
-        const nextPoints = [...current.points, point];
-        if (nextPoints.length >= 9) {
+        const nextCount = current.logoClicks + 1;
+        if (nextCount >= 9) {
           requestAnimationFrame(() => hiddenInputRef.current?.focus());
-          return { ...current, points: nextPoints, codeInputActive: true };
+          return { ...current, logoClicks: nextCount, codeInputActive: true };
         }
 
-        return { ...current, points: nextPoints };
+        return { ...current, logoClicks: nextCount };
       });
     };
 
-    window.addEventListener('pointerdown', handlePointerDown);
-    return () => window.removeEventListener('pointerdown', handlePointerDown);
-  }, [route, secretLock.dotSequenceFinished, secretLock.codeInputActive, secretLock.unlockTriggered]);
+    const logo = document.querySelector('.wordmark') as HTMLImageElement | null;
+    if (!logo) return;
 
-  useEffect(() => {
-    const timers = Object.entries(DISCOVERY_DELAYS).map(([id, delay]) => {
-      const timeout = window.setTimeout(() => {
-        setVisible((current) => ({ ...current, [id]: true }));
-      }, delay);
-      return timeout;
-    });
-
-    return () => timers.forEach((timeout) => window.clearTimeout(timeout));
-  }, []);
+    logo.addEventListener('click', handleLogoClick);
+    return () => logo.removeEventListener('click', handleLogoClick);
+  }, [route, secretLock.dotSequenceFinished, secretLock.unlockTriggered]);
 
   useEffect(() => {
     const timers = Object.entries(DISCOVERY_DELAYS).map(([id, delay]) => {
