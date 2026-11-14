@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type PointerEvent } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import wordmark from '../PUBLIC/image.png';
 
 type Point = {
@@ -705,6 +706,7 @@ function App() {
           }
         }}
       />
+      <Analytics />
     </main>
   );
 }
